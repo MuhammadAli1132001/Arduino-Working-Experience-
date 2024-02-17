@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "\\Dashboard Project For EV\\DashBoard_Graphics_Project_ide1.8.19\\DashBoard_Graphics_Project_ide1.8.19.ino",
+    "port": "COM3",
+    "output": "../build"
+}    

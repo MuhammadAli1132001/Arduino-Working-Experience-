@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "DashBoard_Project_with_menu\\DashBoard_Project_ide1.8.19\\DashBoard_Project_ide1.8.19.ino",
+    "port": "COM3"
+}

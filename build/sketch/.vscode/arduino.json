@@ -1,0 +1,7 @@
+#line 1 "C:\\Users\\Muhammad Ali\\Documents\\Arduino\\hextodecimal\\.vscode\\arduino.json"
+{
+    "board": "arduino:avr:uno",
+    "sketch": "hextodecimal.ino",
+    "output": "../build",
+    "port": "COM6"
+}

@@ -1,0 +1,237 @@
+#include <Adafruit_TFTLCD.h>
+#include <Adafruit_GFX.h>
+#include <TouchScreen.h>
+#include <MCUFRIEND_kbv.h>
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+#define LCD_RESET A4
+
+#define TS_MINX 122
+#define TS_MINY 111
+#define TS_MAXX 500
+#define TS_MAXY 680
+
+#define YP A1
+#define XM A2
+#define YM 7
+#define XP 6
+
+/*
+#define YP A2  // must be an analog pin, use "An" notation!
+#define XM A3  // must be an analog pin, use "An" notation!
+#define YM 8   // can be a digital pin
+#define XP 9   // can be a digital pin
+*/
+
+#define BLACK 0x0000
+#define BLUE 0x001F
+#define RED 0xF800
+#define GREEN 0x07E0
+#define CYAN 0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW 0xFFE0
+#define WHITE 0xFFFF
+
+uint8_t DistanceRange = 60;
+uint8_t BatteryThresold = 15;
+
+Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 334);
+
+boolean buttonEnabled = true;
+boolean buttonEnabledMenu = true;
+boolean buttonEnabledDistance = true;
+boolean buttonEnabledThreshold = true;
+boolean buttonUp = true;
+boolean buttonDown = true;
+boolean buttonSelect = true;
+
+uint8_t menu = 0;
+
+float battery_capacity = 0;
+float distance = 0;
+float current = 0;
+float voltage = 0;
+float power = 0;
+float powerkilo = 0;
+
+float prebattery = 0;
+float predistance = 0;
+float currbattery = 50;
+float currdistance = 0;
+
+float i = 0;
+float j = 0;
+
+void setup()
+{
+
+  Serial.begin(115200);
+
+  tft.reset();
+  uint16_t identifier = tft.readID();
+  tft.begin(identifier);
+  tft.setRotation(1);
+  tft.fillScreen(BLACK);
+  tft.drawRect(0, 0, 319, 240, YELLOW);
+
+  delay(2000);
+  tft.fillScreen(WHITE);
+  tft.setCursor(30, 40);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.print("Dashboard For EV");
+
+  tft.setCursor(115, 80);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.print("Project\n\n            by");
+
+  tft.setCursor(55, 155);
+  tft.setTextColor(BLUE);
+  tft.setTextSize(2);
+  tft.print("Chip Soul Tech");
+
+  tft.fillRect(50, 180, 210, 40, YELLOW);
+  tft.drawRect(50, 180, 210, 40, RED);
+  tft.setCursor(60, 190);
+  tft.setTextColor(BLUE);
+  tft.setTextSize(2);
+  tft.print("Click For detail");
+}
+
+void loop()
+{
+  // TSPoint is object encslt x,y and pressure measurment and getPoint measure, TO Make clickable button on these pixels area
+  TSPoint p = ts.getPoint();
+
+  if (p.z > ts.pressureThreshhold)
+  {
+
+    p.x = map(p.x, TS_MAXX, TS_MINX, 0, 320);
+    p.y = map(p.y, TS_MAXY, TS_MINY, 0, 480);
+
+  
+
+            if (p.x > -100 && p.x < 150 && p.y > 350 && p.y < 400 && buttonEnabledMenu)
+            { // button clikable range
+              Serial.println("\nentered into menu");
+              Serial.print("Press touch region  ");
+              Serial.print(p.x);
+              Serial.print(",");
+              Serial.print(p.y);
+              delay(30);
+              buttonEnabledMenu = false;
+
+              pinMode(XM, OUTPUT);
+              pinMode(YP, OUTPUT);
+
+              tft.fillScreen(BLACK);
+              tft.drawRect(0, 0, 319, 240, YELLOW);
+
+              tft.fillRect(20, 60, 270, 60, BLUE);
+              tft.drawRect(20, 60, 270, 60, RED);
+              tft.setCursor(30, 80);
+              tft.setTextColor(WHITE);
+              tft.setTextSize(2);
+              tft.print("Set Distance in KM ");
+              tft.print(DistanceRange);
+
+              tft.fillRect(20, 130, 270, 60, BLUE);
+              tft.drawRect(20, 130, 270, 60, RED);
+              tft.setCursor(30, 150);
+              tft.setTextColor(WHITE);
+              tft.setTextSize(2);
+              tft.print("Set Battery Threshold");
+            }
+
+            if (p.x > -180 && p.x < 250 && p.y > 40 && p.y < 80 && buttonEnabledDistance && !buttonEnabledMenu)
+            {
+
+              Serial.println("\nSet Distance ");
+              Serial.print("Press Touch Region ");
+              Serial.print(p.x);
+              Serial.print(",");
+              Serial.print(p.y);
+              delay(30);
+              buttonEnabledDistance = false;
+
+              pinMode(XM, OUTPUT);
+              pinMode(YP, OUTPUT);
+
+              tft.fillScreen(BLACK);
+              tft.fillRect(40, 80, 80, 60, GREEN);
+              tft.setCursor(60, 100);
+              tft.setTextColor(WHITE);
+              tft.setTextSize(2);
+              tft.print("UP");
+
+              tft.fillRect(140, 80, 60, 60, BLUE);
+              tft.setTextColor(WHITE);
+              tft.setCursor(145, 100);
+              tft.print(DistanceRange);
+              tft.print("KM");
+
+              tft.fillRect(220, 80, 80, 60, YELLOW);
+              tft.setCursor(230, 100);
+              tft.setTextColor(WHITE);
+              tft.setTextSize(2);
+              tft.print("Down");
+
+              tft.fillRect(120, 160, 100, 60, RED);
+              tft.setCursor(130, 180);
+              tft.setTextColor(WHITE);
+              tft.setTextSize(2);
+              tft.print("Select");
+            }
+
+            if (p.x > -240 && p.x < -80 && p.y > 20 && p.y < 80 && buttonDown && !buttonEnabledDistance && !buttonEnabledMenu)
+            {
+
+              Serial.println("Distance Range updated +");
+
+              DistanceRange = DistanceRange + 1;
+
+              pinMode(XM, OUTPUT);
+              pinMode(YP, OUTPUT);
+
+              tft.fillRect(140, 80, 60, 60, BLUE);
+              tft.setTextColor(WHITE);
+              tft.setCursor(145, 100);
+              tft.print(DistanceRange);
+              tft.print("KM");
+            }
+
+            if (p.x > 200 && p.x < 300 && p.y > 20 && p.y < 80 && buttonUp && !buttonEnabledDistance && !buttonEnabledMenu)
+            {
+
+              Serial.println("Distance Range updated -");
+
+              DistanceRange = DistanceRange - 1;
+
+              pinMode(XM, OUTPUT);
+              pinMode(YP, OUTPUT);
+
+              tft.fillRect(140, 80, 60, 60, BLUE);
+              tft.setTextColor(WHITE);
+              tft.setCursor(145, 100);
+              tft.print(DistanceRange);
+              tft.print("KM");
+            }
+            // if (p.x > -220 && p.x < 120 && p.y > 40 && p.y < 120 && buttonSelect && !buttonEnabledDistance && !buttonEnabledMenu)
+            //     {
+
+            //       Serial.println("Menu selected ");
+
+            //       menu = 0;
+            //       pinMode(XM, OUTPUT);
+            //       pinMode(YP, OUTPUT);
+
+            //   }           
+      }
+    }
+
